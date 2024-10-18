@@ -2,8 +2,13 @@
 
 import torch  
 import torch.nn as nn  
+from torchcrf import CRF
 from transformers import BertModel  
+from transformers import AutoModelForSequenceClassification  
+from config import (LLAMA_MODEL_PATH, LLAMA_TOKENIZER_PATH, LLAMA_ADAPTER_PATH, LLAMA_TRAINED_PATH )
 from config import NUM_CLASSES, BERT_MODEL_PATH  
+
+from load import load_data
 
 class PaperClassifier(nn.Module):  
     """  
@@ -24,6 +29,32 @@ class PaperClassifier(nn.Module):
         pooled_output = self.dropout(pooled_output)  
         logits = self.classifier(pooled_output)  
         return logits  
+
+class IntentClassifier(nn.Module):
+    """  
+    意图分类模型，使用微调后的llama3模型。
+    """  
+    def __init__(self, is_trained = False, use_adapter = False):  
+        super(IntentClassifier, self).__init__()  
+        
+        if not is_trained:
+            self.model = AutoModelForSequenceClassification.from_pretrained(  
+                LLAMA_MODEL_PATH,  
+                num_labels=NUM_CLASSES  
+            )  
+        else:
+            if not use_adapter:
+                self.model = AutoModelForSequenceClassification.from_pretrained(LLAMA_TRAINED_PATH)
+            else: # 使用LoRA
+                self.model = AutoModelForSequenceClassification.from_pretrained(LLAMA_ADAPTER_PATH)
+    
+    def forward(self, input_ids, attention_mask, labels):
+        outputs = self.model(  
+            input_ids=input_ids,  
+            attention_mask=attention_mask,  
+            labels=labels  
+        )  
+        return outputs  
 
 class EntityRelationExtractor(nn.Module):  
     """  

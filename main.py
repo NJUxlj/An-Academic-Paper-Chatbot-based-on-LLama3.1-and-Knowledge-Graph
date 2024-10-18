@@ -1,6 +1,7 @@
 # main.py  
 
 import torch  
+import torch.nn as nn
 from transformers import BertTokenizer  
 from torch.optim import Adam  
 from torch.nn import CrossEntropyLoss  
@@ -10,10 +11,21 @@ from config import (
     BATCH_SIZE,  
     LEARNING_RATE,  
     DEVICE,  
-    MODEL_DIR  
+    MODEL_DIR,
+    LLAMA_MODEL_PATH,
+    LLAMA_ADAPTER_PATH,
+    LLAMA_TRAINED_PATH,
+    BERT_MODEL_PATH,
+    LLAMA_TOKENIZER_PATH,
 )  
-from load import get_dataloader  
+
 from model import PaperClassifier  
+
+from transformers import AutoTokenizer, get_linear_schedule_with_warmup  
+from model import IntentClassifier  
+from load import load_data  
+from evaluate import Evaluator 
+
 import os  
 
 def train():  
@@ -22,8 +34,8 @@ def train():
     optimizer = Adam(model.parameters(), lr=LEARNING_RATE)  
     criterion = CrossEntropyLoss()  
 
-    train_loader = get_dataloader('train.jsonl', tokenizer, BATCH_SIZE)  
-    valid_loader = get_dataloader('valid.jsonl', tokenizer, BATCH_SIZE, shuffle=False)  
+    train_loader = load_data('train.jsonl', tokenizer, BATCH_SIZE)  
+    valid_loader = load_data('valid.jsonl', tokenizer, BATCH_SIZE, shuffle=False)  
 
     for epoch in range(NUM_EPOCHS):  
         model.train()  
@@ -51,6 +63,61 @@ def train():
     model_save_path = os.path.join(MODEL_DIR, 'paper_classifier.pt')  
     torch.save(model.state_dict(), model_save_path)  
     print(f'Model saved to {model_save_path}')  
+    
+    
+
+def train_llama():
+    '''
+        训练基于llama3的意图预测模型
+    '''
+    tokenizer = AutoTokenizer.from_pretrained(LLAMA_MODEL_PATH)  
+    train_loader, val_loader = load_data(tokenizer)  
+    
+    model = IntentClassifier().to(DEVICE)  
+    optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)  
+    total_steps = len(train_loader) * NUM_EPOCHS  
+    scheduler = get_linear_schedule_with_warmup(  
+        optimizer,  
+        num_warmup_steps=0,  
+        num_training_steps=total_steps  
+    )  
+    criterion = nn.CrossEntropyLoss()  
+
+    evaluator = Evaluator(model, tokenizer)  
+
+    for epoch in range(NUM_EPOCHS):  
+        model.train()  
+        total_loss = 0  
+        for batch in train_loader:  
+            optimizer.zero_grad()  
+
+            input_ids = batch['input_ids'].to(DEVICE)  
+            attention_mask = batch['attention_mask'].to(DEVICE)  
+            labels = batch['labels'].to(DEVICE)  
+
+            outputs = model(  
+                input_ids=input_ids,  
+                attention_mask=attention_mask,  
+                labels=labels  
+            )  
+            loss = outputs.loss  
+            loss.backward()  
+            optimizer.step()  
+            scheduler.step()  
+
+            total_loss += loss.item()  
+
+        avg_train_loss = total_loss / len(train_loader)  
+        print(f"Epoch {epoch+1}/{NUM_EPOCHS}, Training Loss: {avg_train_loss}")  
+
+        # 验证模型性能  
+        val_accuracy = evaluator.evaluate(val_loader)  
+        print(f"Validation Accuracy: {val_accuracy}")  
+
+    # 保存模型  
+    model_save_path = LLAMA_TRAINED_PATH
+    model.model.save_pretrained(model_save_path)  
+    tokenizer.save_pretrained(LLAMA_TOKENIZER_PATH)  
 
 if __name__ == '__main__':  
     train()

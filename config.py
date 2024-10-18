@@ -1,6 +1,7 @@
 # config.py  
 
 import os  
+import torch
 
 # === 路径配置 ===  
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  
@@ -9,6 +10,9 @@ MODEL_DIR = os.path.join(BASE_DIR, 'model')
 
 # === 模型配置 ===  
 LLAMA_MODEL_PATH = os.path.join(MODEL_DIR, 'llama3-8b')  # 请将模型路径更新为实际路径  
+LLAMA_TOKENIZER_PATH = os.path.join(MODEL_DIR, 'llama3-8b-tokenizer')
+LLAMA_ADAPTER_PATH = os.path.join(MODEL_DIR, 'llama3-8b-adapter')
+LLAMA_TRAINED_PATH = os.path.join(MODEL_DIR, 'llama3-8b-trained')
 BERT_MODEL_PATH = 'bert-base-uncased'  # 或根据实际情况更改  
 
 # === 超参数 ===  

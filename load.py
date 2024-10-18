@@ -6,6 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import BertTokenizer  
 from config import DATA_DIR, MAX_SEQ_LENGTH  
 
+
 class PaperDataset(Dataset):  
     """  
     自定义数据集类，用于加载论文数据。  
@@ -45,7 +46,7 @@ class PaperDataset(Dataset):
             'label': label  
         }  
 
-def get_dataloader(file_path, tokenizer, batch_size, shuffle=True):  
+def load_data(file_path, tokenizer, batch_size, shuffle=True):  
     dataset = PaperDataset(file_path, tokenizer)  
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)  
     return dataloader
