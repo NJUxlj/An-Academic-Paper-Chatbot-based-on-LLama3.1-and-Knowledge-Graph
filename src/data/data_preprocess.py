@@ -4,7 +4,7 @@ import os
 import json  
 from torch.utils.data import Dataset, DataLoader  
 from transformers import BertTokenizer  
-from config import DATA_DIR, MAX_SEQ_LENGTH  
+from src.configs.config import DATA_DIR, MAX_SEQ_LENGTH  
 
 
 class PaperDataset(Dataset):  

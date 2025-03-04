@@ -5,10 +5,10 @@ import torch.nn as nn
 from torchcrf import CRF
 from transformers import BertModel  
 from transformers import AutoModelForSequenceClassification  
-from config import (LLAMA_MODEL_PATH, LLAMA_TOKENIZER_PATH, LLAMA_ADAPTER_PATH, LLAMA_TRAINED_PATH )
-from config import NUM_CLASSES, BERT_MODEL_PATH  
+from src.configs.config import (LLAMA_MODEL_PATH, LLAMA_TOKENIZER_PATH, LLAMA_ADAPTER_PATH, LLAMA_TRAINED_PATH )
+from src.configs.config import NUM_CLASSES, BERT_MODEL_PATH  
 
-from load import load_data
+from src.data.data_preprocess import load_data
 
 class PaperClassifier(nn.Module):  
     """  

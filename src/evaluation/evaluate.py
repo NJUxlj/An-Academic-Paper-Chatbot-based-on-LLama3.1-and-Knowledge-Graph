@@ -4,9 +4,9 @@ import torch
 import numpy as np
 from sklearn.metrics import classification_report  
 from transformers import BertTokenizer  
-from load import get_dataloader  
-from model import PaperClassifier  
-from config import (  
+from src.data.data_preprocess import get_dataloader  
+from src.models.model import PaperClassifier  
+from src.configs.config import (  
     BATCH_SIZE,  
     DEVICE,  
     MODEL_DIR,  

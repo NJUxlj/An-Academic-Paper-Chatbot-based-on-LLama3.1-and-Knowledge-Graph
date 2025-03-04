@@ -6,7 +6,7 @@ from transformers import BertTokenizer
 from torch.optim import Adam  
 from torch.nn import CrossEntropyLoss  
 from tqdm import tqdm  
-from config import (  
+from src.configs.config import (  
     NUM_EPOCHS,  
     BATCH_SIZE,  
     LEARNING_RATE,  
@@ -19,12 +19,12 @@ from config import (
     LLAMA_TOKENIZER_PATH,
 )  
 
-from model import PaperClassifier  
+from src.models.model import PaperClassifier  
 
 from transformers import AutoTokenizer, get_linear_schedule_with_warmup  
-from model import IntentClassifier  
-from load import load_data  
-from evaluate import Evaluator 
+from src.models.model import IntentClassifier  
+from src.data.data_preprocess import load_data  
+from src.evaluation.evaluate import Evaluator 
 
 import os  
 
