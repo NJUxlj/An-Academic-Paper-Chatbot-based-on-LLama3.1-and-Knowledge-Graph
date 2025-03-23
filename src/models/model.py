@@ -1,5 +1,5 @@
 # model.py  
-
+import os
 import torch  
 import torch.nn as nn  
 from torchcrf import CRF
@@ -9,6 +9,10 @@ from src.configs.config import (LLAMA_MODEL_PATH, LLAMA_TOKENIZER_PATH, LLAMA_AD
 from src.configs.config import NUM_CLASSES, BERT_MODEL_PATH  
 
 from src.data.data_preprocess import load_data
+
+
+
+from openai import OpenAI
 
 class PaperClassifier(nn.Module):  
     """  
@@ -84,3 +88,38 @@ class EntityRelationExtractor(nn.Module):
         else:  
             prediction = self.crf.decode(emissions, mask=attention_mask.byte())  
             return prediction
+        
+        
+        
+        
+        
+
+
+class OpenAIModel():
+    '''
+    封装OpenAI的API调用
+    '''
+    def __init__(self):
+        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        
+    def generate(self)->str:
+        response = self.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Who won the world series in 2020?"},  
+            ],
+            temperature=0.7,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        
+        result = response.choices[0].message.content
+        return result 
+    
+    
+    
+    
