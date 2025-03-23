@@ -1,0 +1,29 @@
+[
+{
+"id":"node1",
+"intent":["我要买衣服"],
+"slot":["#服装类型#", "#服装颜色#", "#服装尺寸#"],
+"action":["select 衣服 where 类型=#服装类型# and 颜色=#服装颜色# and 尺寸=#服装尺寸#"],
+"response":"为您推荐这一款，#服装尺寸#号，#服装颜色#色#服装类型#，产品连接：xxx",
+"childnode":["node2", "node3", "node4"]
+},
+{
+"id":"node2",
+"intent":["我没钱"],
+"response":"没钱你可以选择分期付款",
+"childnode":["node3"]
+},
+{
+"id":"node3",
+"intent":["可以分期付款吗"],
+"slot":["#分期付款期数#", "#支付方式#"],
+"action":["MAKE_PAYMENT"],
+"response":"好的，为您办理分期付款，分#分期付款期数#期，使用#支付方式#支付，谢谢惠顾"
+},
+{
+"id":"node4",
+"intent":["我买了"],
+"action":["TAKE_ORDER"],
+"response":"已为您下单，谢谢惠顾，流程结束"
+}
+]
