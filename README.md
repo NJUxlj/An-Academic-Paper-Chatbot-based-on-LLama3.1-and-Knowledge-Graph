@@ -1,4 +1,4 @@
-# An-Academic-Paper-Chatbot-based-on-LLama3.1-and-Knowledge-Graph
+# An-Academic-Paper-Chatbot-based-on-Qwen2.5-and-Knowledge-Graph
 基于知识图谱和大模型的对话系统
 
 
@@ -15,14 +15,16 @@ _______
 
 
 
-## 项目内容如下：
+## 项目内容：
 
 项目环境：pytorch+gradio
 1. 项目描述: 整合数十篇AI论文的知识点来搭建作为一个FAQ知识库,为研究生和教授们提供一个论文问答服务。
-2. 项目主要构成: 对话系统、论文上传, pdf解析+读取，论文转换为论文框架（GPT-4），论文框架分类和论文中的实体抽取, 以及问答服务实现。
-3. 系统输入：用户上传的论文.pdf+问题
+2. 项目主要构成: 对话系统 (Dialog System)、论文上传, pdf解析+读取，使用 `GPT-4o` 从论文中抽取论文框架 (paper framework, 实则为md格式的论文整体摘要)，论文框架分类和论文中的实体三元组抽取, 以及问答服务实现。
+3. 系统输入：
+   1. 类型1：用户上传的论文.pdf+问题 【用于询问某片特定论文中的知识点】
+   2. 类型2：仅用户的问题 【仅用于询问AI领域的某一个概念】
 4. FAQ库的单条数据格式{"stand_query":"xxxx", "similar_query":set('xxx','xxx',...), "answer": xxxx}
-5. 论文框架结构：{"Abstract":'xxxxxx', "Introduction":"xxxxxxx", "Methodology":"xxxxxx", "Experiment":'xxxxxx', "Results": 'xxxxxxx'}
+5. 论文框架结构[md格式的文本]：{"Abstract":'xxxxxx', "Introduction":"xxxxxxx", "Methodology":"xxxxxx", "Experiment":'xxxxxx', "Results": 'xxxxxxx'}
 
 
 
@@ -30,7 +32,7 @@ _______
 6. 项目任务:
 - 使用 `Qwen2.5` 模型来针对论文框架集合进行微调,实现论文自动分类，分到12个类别: ["Attention & Model Architecture", "Benchmarks", "BERT", "Chain-of-Thought", "Fine-Tuning", "Long-Context", "LoRA", "Instruction&Prompt-Tuning", "RAG", "RL", "RLHF", "Reasoning"]。
 
-- 使用 `Bert+BiLSTM+CRF` 抽取论文中的 `<实体, 关系, 实体>` 和 `<实体，属性，属性值>` 三元组, 使用 `neo4j` 构建论文框架知识图谱
+- 使用 `Bert+BiLSTM+CRF` 抽取论文中的 `<实体, 关系, 实体>` 和 `<实体，属性，属性值>` 三元组 [构建结构化知识], 使用 `neo4j` 构建论文框架知识图谱
 
 - 识别老师和学生**提交的问题的意图**
   - 在对话系统部署前，使用该系统的历史问答数据【问题-意图】对llama3进行微调，生成意图分类模型, 预测出当前用户的意图。
@@ -50,8 +52,8 @@ _______
 ## 项目流程总结
 1. 用户通过前端界面上传论文PDF和提问的问题。
 2. 服务器端解析PDF，提取文本内容。
-3. 调用GPT-4，将论文文本转换为论文框架结构。
-4. 使用LLama3-8B模型对论文框架进行分类，预测论文类别。
+3. 调用 `GPT-4o`，将论文文本转换为论文框架结构。
+4. 使用 `Qwen2.5` 模型对论文框架进行分类，预测论文类别。
 5. 使用Bert+BiLSTM+CRF模型从论文中抽取实体和关系，构建知识图谱。
 6. 识别用户问题的意图，将其转换为向量。
 7. 计算意图与FAQ库和论文类别的相似度，获取排名前3的答案。
@@ -65,9 +67,46 @@ _______
 
 
 
-## 项目文件组织
+## 项目结构
+
+```Plain Text
+
+|--- Academic_Paper_Chatbot
+    |--- src
+        |--- configs
+            |--- config.py
+            |--- data
+    |--- agent
+    |--- data
+    |--- models
+           |--- prm   
+                  |--- prm.py
+                  |--- orm.py
+           |--- qwen2
+                  |--- configuration_qwen2.py
+                  |--- modeling_qwen2.py
+                  |--- tokenization_qwen2.py
+           |--- model.py
+    |--- evaluation
+            |--- evaluate.py
+
+    |--- dialogue_system_test # 测试对话系统, 这里都是一些未整合进主项目中的技术
+
+    |--- main.py   # 主训练文件， 不管Trainer在哪里定义，最后统统要在这里跑。
 
 
+
+```
+
+
+
+## 项目环境
+
+- AutoDL Cloud Platform
+  
+![env](image/env.png)
+
+- then, make sure to pre-download the model weight (e.g. Qwen2.5-1.5B on the huggingface) to the local storage (e.g., `/root/autodl-tmp/models/Qwen2.5-1.5B`).
 
 
 
@@ -77,3 +116,4 @@ _______
 
 
 ## 运行结果
+- 存放在主目录的 `examples` 文件夹下。
