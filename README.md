@@ -18,18 +18,35 @@ _______
 ## 项目内容：
 
 项目环境：pytorch+gradio
-1. 项目描述: 整合数十篇AI论文的知识点来搭建作为一个FAQ知识库,为研究生和教授们提供一个论文问答服务。
-2. 项目主要构成: 对话系统 (Dialog System)、论文上传, pdf解析+读取，使用 `GPT-4o` 从论文中抽取论文框架 (paper framework, 实则为md格式的论文整体摘要)，论文框架分类和论文中的实体三元组抽取, 以及问答服务实现。
+### 1. 项目描述: 
+整合数十篇AI论文的知识点来搭建作为一个FAQ知识库,为研究生和教授们提供一个论文问答服务。
+
+###  2. 项目主要构成: 
+1. 对话系统 (Dialog System) 【qwen2.5作为主模型，GPT-4o作为整合和优化最终回答的模型】
+   1. 在对话流程的任何一个步骤上，用户如果说 “我没听清楚”，则必须让AI重新问一遍问题 【重听】。
+2. 知识图谱 (Knowledge Graph) 【neo4j】
+   1. 里面用来存储从论文中提取的实体三元组
+3. 推荐系统：
+   1. 基于用户上传的论文，从知识库中推荐相关的论文
+   2. 基于用户的问题，从知识库中推荐相关的论文  
+4. 论文上传, pdf解析+读取相关模块.
+5. 使用 `GPT-4o` 从论文中抽取论文框架 (paper framework, 实则为md格式的论文整体摘要)。[PaperFrameWorkExtractor]
+6. 使用 `qwen2.5` 进行论文框架分类 [PaperFrameWorkClassifier]
+7. 使用 `qwen2.5` 来抽取论文中的实体三元组 [EntityTripleExtractor]
+
+
 3. 系统输入：
    1. 类型1：用户上传的论文.pdf+问题 【用于询问某片特定论文中的知识点】
    2. 类型2：仅用户的问题 【仅用于询问AI领域的某一个概念】
-4. FAQ库的单条数据格式{"stand_query":"xxxx", "similar_query":set('xxx','xxx',...), "answer": xxxx}
-5. 论文框架结构[md格式的文本]：{"Abstract":'xxxxxx', "Introduction":"xxxxxxx", "Methodology":"xxxxxx", "Experiment":'xxxxxx', "Results": 'xxxxxxx'}
+4. FAQ库的单条数据格式:
+   1. {"stand_query":"xxxx", "similar_query":set('xxx','xxx',...), "answer": xxxx}
+5. 论文框架结构[md格式的文本]：
+   1. {"Abstract":'xxxxxx', "Introduction":"xxxxxxx", "Methodology":"xxxxxx", "Experiment":'xxxxxx', "Results": 'xxxxxxx'}
 
 
 
 
-6. 项目任务:
+### 项目任务:
 - 使用 `Qwen2.5` 模型来针对 `论文框架` 集合进行微调 (SFT/LoRA), 实现论文自动分类，分到12个类别: ["Attention & Model Architecture", "Benchmarks", "BERT", "Chain-of-Thought", "Fine-Tuning", "Long-Context", "LoRA", "Instruction&Prompt-Tuning", "RAG", "RL", "RLHF", "Reasoning"]。
 
 - 使用 `Bert+BiLSTM+CRF` 抽取论文（注意，这里不是框架）中的 `<实体, 关系, 实体>` 和 `<实体，属性，属性值>` 三元组 [构建结构化知识], 使用 `neo4j` 构建论文框架知识图谱
