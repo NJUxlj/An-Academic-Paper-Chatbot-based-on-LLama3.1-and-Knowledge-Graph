@@ -1,4 +1,4 @@
-# model.py  
+# model.py     # 主模型接口
 import os
 import torch  
 import torch.nn as nn  
