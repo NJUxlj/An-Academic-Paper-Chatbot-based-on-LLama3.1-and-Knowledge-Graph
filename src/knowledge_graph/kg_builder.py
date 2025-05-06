@@ -74,6 +74,54 @@ class KnowledgeGraphBuilder:
         except Exception as e:
             logger.error(f"构建知识图谱时出错: {e}")
             return {"error": str(e)}
+        
+    def add_paper(self, paper_data: Dict[str, Any]) -> str:
+        """
+        将论文数据添加到知识图谱
+        
+        Args:
+            paper_data: 论文数据，包括元数据、文本块、框架等
+            
+        Returns:
+            论文ID
+        """
+        try:
+            # 提取元数据
+            metadata = paper_data.get("metadata", {})
+            
+            # 获取分类
+            category = paper_data.get("category", "未分类")
+            
+            # 获取框架
+            framework = paper_data.get("framework", {})
+            
+            # 创建论文节点
+            paper_id = self._create_paper_node(metadata, category)
+            
+            # 处理框架，添加节点和关系
+            if framework:
+                self._save_paper_framework(paper_id, framework)
+            
+            # 处理全文，提取实体和关系
+            if "full_text" in paper_data:
+                entities, relations = self._extract_entities_relations(paper_data["full_text"])
+                self._add_entities_relations(paper_id, entities, relations)
+            
+            # 处理文本块，优化检索
+            if "chunks" in paper_data:
+                self._add_paper_chunks(paper_id, paper_data["chunks"])
+            
+            # 处理引用文献和被引用关系
+            if "references" in paper_data and paper_data["references"]:
+                self._add_paper_references(paper_id, paper_data["references"])
+            
+            logger.info(f"论文添加成功，ID: {paper_id}")
+            
+            return paper_id
+        
+        except Exception as e:
+            logger.error(f"添加论文到知识图谱时出错: {e}")
+            raise
     
     def _create_paper_node(self, metadata: Dict[str, str], category: str) -> str:
         """
@@ -365,3 +413,173 @@ class KnowledgeGraphBuilder:
                 name2=entity2_name
             )
             return [record.data() for record in result]
+        
+        
+        
+        
+        
+        
+    def _extract_entities_relations(self, text: str) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
+        """
+        从文本中抽取实体和关系
+        
+        - 使用BERT-BiLSTM-CRF模型从文本中抽取实体和关系
+        - 返回去重后的实体列表和完整的关系列表
+        - 包含详细的错误处理
+        
+        Args:
+            text: 输入文本
+            
+        Returns:
+            (entities, relations) 实体列表和关系列表
+        """
+        try:
+            # 使用实体抽取器获取三元组
+            triples = self.extractor.extract_triples(text)
+            
+            # 提取实体
+            entities = []
+            seen_entities = set()
+            for triple in triples:
+                head = {"name": triple["head"], "type": triple["head_type"]}
+                tail = {"name": triple["tail"], "type": triple["tail_type"]}
+                
+                if triple["head"] not in seen_entities:
+                    entities.append(head)
+                    seen_entities.add(triple["head"])
+                
+                if triple["tail"] not in seen_entities:
+                    entities.append(tail)
+                    seen_entities.add(triple["tail"])
+            
+            # 提取关系
+            relations = [{
+                "source": triple["head"],
+                "target": triple["tail"],
+                "type": triple["relation"],
+                "source_type": triple["head_type"],
+                "target_type": triple["tail_type"]
+            } for triple in triples]
+            
+            return entities, relations
+            
+        except Exception as e:
+            logger.error(f"抽取实体和关系时出错: {e}")
+            return [], []
+
+    def _add_paper_chunks(self, paper_id: str, chunks: List[Dict[str, Any]]) -> None:
+        """
+        添加论文文本块到知识图谱
+        
+        - 将论文分块存储到Neo4j
+        - 建立论文与文本块之间的HAS_CHUNK关系
+        - 支持批量处理多个文本块
+        
+        Args:
+            paper_id: 论文ID
+            chunks: 文本块列表
+        """
+        with self.driver.session() as session:
+            for chunk in chunks:
+                session.run(
+                    """
+                    MATCH (p:Paper) WHERE id(p) = $paper_id
+                    MERGE (c:Chunk {text: $text, index: $index})
+                    MERGE (p)-[:HAS_CHUNK]->(c)
+                    """,
+                    paper_id=paper_id,
+                    text=chunk.get("text", ""),
+                    index=chunk.get("index", 0)
+                )
+
+    def _add_paper_references(self, paper_id: str, references: List[Dict[str, str]]) -> None:
+        """
+        添加论文引用关系到知识图谱
+        - 自动创建或匹配被引用的论文节点
+        - 建立CITES引用关系
+        - 支持批量处理多个参考文献
+        
+        Args:
+            paper_id: 论文ID
+            references: 引用文献列表
+        """
+        with self.driver.session() as session:
+            for ref in references:
+                # 创建或匹配引用论文节点
+                result = session.run(
+                    """
+                    MERGE (r:Paper {title: $title})
+                    ON CREATE SET 
+                        r.author = $author,
+                        r.year = $year
+                    RETURN id(r) as ref_id
+                    """,
+                    title=ref.get("title", ""),
+                    author=ref.get("author", ""),
+                    year=ref.get("year", "")
+                )
+                ref_id = result.single()["ref_id"]
+                
+                # 创建引用关系
+                session.run(
+                    """
+                    MATCH (p:Paper) WHERE id(p) = $paper_id
+                    MATCH (r:Paper) WHERE id(r) = $ref_id
+                    MERGE (p)-[:CITES]->(r)
+                    """,
+                    paper_id=paper_id,
+                    ref_id=ref_id
+                )
+
+
+
+    def _add_entities_relations(self, paper_id: str, entities: List[Dict[str, str]], relations: List[Dict[str, str]]) -> None:
+        """
+        将实体和关系添加到知识图谱
+        
+        1. 使用MERGE语句创建或匹配实体节点，避免重复创建
+        2. 为每个实体节点设置创建时间戳
+        3. 建立论文节点与实体节点之间的MENTIONS关系
+        4. 创建实体之间的各种关系，并设置创建时间戳
+        5. 使用事务批量处理所有实体和关系
+        该函数与 _extract_entities_relations 配合使用，共同完成从论文文本到知识图谱的转换过程。
+                
+        Args:
+            paper_id: 论文节点ID
+            entities: 实体列表，每个实体包含name和type字段
+            relations: 关系列表，每个关系包含source, target, type等字段
+        """
+        with self.driver.session() as session:
+            # 添加实体节点
+            for entity in entities:
+                session.run(
+                    f"""
+                    MERGE (e:{entity['type']} {{name: $name}})
+                    ON CREATE SET e.created_at = datetime()
+                    """,
+                    name=entity['name']
+                )
+                
+                # 将实体与论文关联
+                session.run(
+                    f"""
+                    MATCH (p:Paper) WHERE id(p) = $paper_id
+                    MATCH (e:{entity['type']} {{name: $name}})
+                    MERGE (p)-[:MENTIONS]->(e)
+                    """,
+                    paper_id=paper_id,
+                    name=entity['name']
+                )
+            
+            # 添加关系
+            for relation in relations:
+                session.run(
+                    f"""
+                    MATCH (s:{relation['source_type']} {{name: $source}})
+                    MATCH (t:{relation['target_type']} {{name: $target}})
+                    MERGE (s)-[r:{relation['type']}]->(t)
+                    ON CREATE SET r.created_at = datetime()
+                    """,
+                    source=relation['source'],
+                    target=relation['target']
+                )

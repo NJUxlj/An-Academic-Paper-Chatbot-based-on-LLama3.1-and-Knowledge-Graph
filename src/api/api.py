@@ -17,6 +17,7 @@ from src.knowledge_graph.kg_query import KnowledgeGraphQuerier
 from src.knowledge_base.vector_store import VectorStore
 from src.utils.pdf_parser import PDFParser
 from src.models.classifier.qwen_classifier import PaperFrameworkClassifier
+from src.models.paper_framework.extractor import PaperFrameworkExtractor
 
 # 配置日志
 logging.basicConfig(
@@ -35,10 +36,10 @@ app = FastAPI(
 # 添加CORS中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有源，生产环境中应限制
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # 允许所有域名跨域访问（开发环境常用）
+    allow_credentials=True,   # 允许携带凭据（如cookies）
+    allow_methods=["*"],    # 允许所有HTTP方法
+    allow_headers=["*"],   # 允许所有请求头
 )
 
 # 全局组件
@@ -48,6 +49,7 @@ kg_querier = KnowledgeGraphQuerier()
 vector_store = VectorStore()
 pdf_parser = PDFParser()
 classifier = PaperFrameworkClassifier()
+extractor = PaperFrameworkExtractor()
 
 # 请求模型
 class QuestionRequest(BaseModel):
@@ -205,7 +207,7 @@ async def upload_paper(file: UploadFile = File(...)):
             paper_data["category_confidence"] = classification_result["confidence_scores"]
         
         # 提取框架
-        framework = classifier.extract_framework(paper_data["full_text"])
+        framework = extractor.extract_framework(paper_data["full_text"])
         paper_data["framework"] = framework
         
         # 添加到知识图谱
