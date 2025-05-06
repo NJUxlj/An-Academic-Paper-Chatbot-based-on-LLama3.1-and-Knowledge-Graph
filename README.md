@@ -110,51 +110,6 @@ K --> L[GLM-4优化输出]
 
 ## 项目结构
 
-```Plain Text
-
-|--- Academic_Paper_Chatbot
-    |--- src
-        |--- configs
-            |--- config.py
-            |--- data
-        |--- agent
-        |--- data
-              |--- data_preprocess.py
-        |--- models
-              |--- prm   
-                      |--- prm.py
-                      |--- orm.py
-              |--- qwen2
-                      |--- configuration_qwen2.py
-                      |--- modeling_qwen2.py
-                      |--- tokenization_qwen2.py
-              |--- model.py
-              |--- trainer.py
-
-          |--- recommandation_system
-
-          |--- utils
-
-          |--- dialogue_system
-
-          |--- knowledge_graph
-
-          |--- knowledge_base
-
-          |--- evaluation
-                  |--- evaluate.py
-
-
-          |--- dialogue_system_test # 测试对话系统, 这里都是一些未整合进主项目中的技术
-
-    |--- main.py   # 主训练文件， 不管Trainer在哪里定义，最后统统要在这里跑。
-
-
-
-```
-
-
-## 进阶项目结构
 
 ```
 |--- Academic_Paper_Chatbot  
@@ -223,3 +178,149 @@ K --> L[GLM-4优化输出]
 
 ## 运行结果
 - 存放在主目录的 `examples` 文件夹下。
+
+
+
+
+
+# 用户指南
+
+## 安装
+
+### 方式一：通过pip安装【目前包还未上传，先别用】
+
+```bash
+# 安装
+pip install paperchat
+
+# 检查安装
+paperchat --version
+```
+
+### 方式二：通过源码安装
+
+```bash
+# 克隆仓库
+git clone https://github.com/paperchat/paperchat.git
+cd paperchat
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 安装包
+pip install -e .
+```
+
+### 方式三：使用Docker
+
+```bash
+# 使用Docker Compose启动全部服务
+docker-compose up -d
+```
+
+## 初始化
+
+首次使用前，需要初始化系统：
+
+```bash
+# 初始化数据库和向量存储
+paperchat init --all
+
+# 或单独初始化
+paperchat init --db      # 只初始化数据库
+paperchat init --vector  # 只初始化向量存储
+```
+
+## 导入论文
+
+```bash
+# 导入单个PDF文件
+paperchat import /path/to/paper.pdf
+
+# 导入目录中的所有PDF文件
+paperchat import /path/to/papers/
+
+# 递归导入目录及其子目录中的所有PDF文件
+paperchat import /path/to/papers/ --recursive
+```
+
+## 启动服务
+
+```bash
+# 启动API服务器
+paperchat server
+
+# 指定主机和端口
+paperchat server --host 0.0.0.0 --port 8000
+
+# 启用系统监控
+paperchat server --monitor
+
+# 启动Web客户端
+paperchat client
+
+# 指定Web服务器端口
+paperchat client --port 8080
+```
+
+## 知识图谱管理
+
+```bash
+# 构建知识图谱
+paperchat kg build
+
+# 查看知识图谱统计信息
+paperchat kg stats
+
+# 清空知识图谱(危险操作)
+paperchat kg clear --force
+```
+
+## 使用Web界面
+
+启动API服务器和Web客户端后，通过浏览器访问 http://localhost:8080 使用Web界面。
+
+Web界面包含四个主要功能区：
+
+1. **对话界面**：与论文进行对话查询
+2. **论文库**：浏览和管理已导入的论文
+3. **上传论文**：上传和分析新论文
+4. **知识图谱**：可视化浏览知识图谱
+
+### 基本使用流程
+
+1. 导入论文
+2. 在论文库中选择感兴趣的论文
+3. 使用对话界面提问
+4. 查看知识图谱了解概念关系
+
+## 故障排除
+
+常见问题：
+
+1. **数据库连接失败**：检查Neo4j服务是否运行，配置是否正确
+2. **向量存储异常**：检查Milvus服务是否运行，配置是否正确
+3. **模型加载失败**：检查模型文件是否存在，路径是否正确
+
+查看日志文件获取详细错误信息：
+
+```bash
+cat logs/paperchat.log
+```
+
+## 高级配置
+
+配置文件位于 `src/configs/config.py`，可根据需要进行修改。
+
+主要配置项：
+
+- 模型路径和参数
+- 数据库连接信息
+- API服务器设置
+- 日志配置
+
+## 支持和反馈
+
+如有问题或建议，请访问项目GitHub仓库创建Issue。
+
+

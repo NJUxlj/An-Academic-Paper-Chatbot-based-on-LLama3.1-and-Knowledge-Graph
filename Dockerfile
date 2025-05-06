@@ -9,11 +9,15 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 安装Python和必要的依赖
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-dev \
     build-essential libpq-dev \
     wget curl git \
     lsb-release \
+    poppler-utils \
+    libpoppler-cpp-dev \
+    pkg-config \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装Neo4j (确保添加适当的仓库)
@@ -29,11 +33,23 @@ COPY . /app/
 # 安装项目依赖
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+
+# 创建必要的目录
+RUN mkdir -p /app/data/processed
+RUN mkdir -p /app/data/raw
+RUN mkdir -p /app/data/cache
+RUN mkdir -p /app/logs
+
+# 设置环境变量
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+
 # 下载必要的模型和数据
 RUN mkdir -p /root/autodl-tmp/models/ \
     && python3 -c "from transformers import AutoTokenizer, AutoModel; \
-    AutoTokenizer.from_pretrained('Qwen/Qwen2.5-1.5B', cache_dir='/root/autodl-tmp/models/Qwen2.5-1.5B'); \
-    AutoModel.from_pretrained('Qwen/Qwen2.5-1.5B', cache_dir='/root/autodl-tmp/models/Qwen2.5-1.5B')"
+    AutoTokenizer.from_pretrained('Qwen/Qwen2.5-1.5B-Instruct', cache_dir='/root/autodl-tmp/models/Qwen2.5-1.5B-Instruct'); \
+    AutoModel.from_pretrained('Qwen/Qwen2.5-1.5B-Instruct', cache_dir='/root/autodl-tmp/models/Qwen2.5-1.5B-Instruct')"
 
 # 配置Neo4j
 RUN echo 'dbms.security.auth.enabled=true' >> /etc/neo4j/neo4j.conf \

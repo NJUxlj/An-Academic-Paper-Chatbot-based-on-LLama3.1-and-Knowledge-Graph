@@ -1,3 +1,8 @@
 **/__pycache__/
 output/
 outputs/
+**/.env
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
