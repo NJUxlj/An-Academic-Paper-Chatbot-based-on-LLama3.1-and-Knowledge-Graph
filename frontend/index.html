@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学术论文对话系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-book-reader me-2"></i>
+                学术论文对话系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" id="chat-tab">对话</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="papers-tab">论文库</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="upload-tab">上传论文</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="kg-tab">知识图谱</a>
+                    </li>
+                </ul>
+                <form class="d-flex">
+                    <input class="form-control me-2" type="search" placeholder="搜索论文或概念" aria-label="Search">
+                    <button class="btn btn-outline-light" type="submit">搜索</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- 对话界面 -->
+        <div id="chat-view" class="view-content active">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">对话</h5>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-secondary" id="clear-chat">
+                                    <i class="fas fa-broom me-1"></i>清空
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" id="export-chat">
+                                    <i class="fas fa-download me-1"></i>导出
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chat-container" id="chat-messages">
+                                <!-- 对话消息将在这里动态添加 -->
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="input-group">
+                                <textarea class="form-control" id="chat-input" placeholder="输入问题..." rows="2"></textarea>
+                                <button class="btn btn-primary" id="send-button">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">推荐论文</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="recommendations">
+                                <p class="text-muted">基于您的问题，我们会在这里显示相关论文推荐。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">当前论文</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="current-paper">
+                                <p class="text-muted">选择一篇论文以关注特定内容。</p>
+                                <button class="btn btn-sm btn-outline-primary" id="select-paper-btn">
+                                    <i class="fas fa-book me-1"></i>选择论文
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 论文库界面 -->
+        <div id="papers-view" class="view-content">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">论文库</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" id="refresh-papers">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                分类筛选
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="categoryDropdown" id="category-filters">
+                                <li><a class="dropdown-item active" href="#" data-category="all">所有类别</a></li>
+                                <!-- 论文类别将在这里动态添加 -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="papers-table">
+                            <thead>
+                                <tr>
+                                    <th>标题</th>
+                                    <th>作者</th>
+                                    <th>类别</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 论文列表将在这里动态添加 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <nav aria-label="Paper pagination">
+                        <ul class="pagination justify-content-center mb-0" id="papers-pagination">
+                            <!-- 分页控件将在这里动态添加 -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- 上传论文界面 -->
+        <div id="upload-view" class="view-content">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">上传论文</h5>
+                </div>
+                <div class="card-body">
+                    <form id="upload-form">
+                        <div class="mb-3">
+                            <label for="pdf-file" class="form-label">选择PDF文件</label>
+                            <input class="form-control" type="file" id="pdf-file" accept=".pdf" required>
+                            <div class="form-text">支持PDF格式，文件大小不超过20MB。</div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary" id="upload-button">
+                                <i class="fas fa-cloud-upload-alt me-1"></i>上传并分析
+                            </button>
+                        </div>
+                    </form>
+                    <div class="mt-4">
+                        <div class="progress mb-3 d-none" id="upload-progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="alert alert-info d-none" id="upload-status"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-3 d-none" id="analysis-results">
+                <div class="card-header">
+                    <h5 class="mb-0">分析结果</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>论文信息</h6>
+                            <table class="table">
+                                <tbody>
+                                    <tr>
+                                        <th>标题</th>
+                                        <td id="paper-title">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>作者</th>
+                                        <td id="paper-author">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>分类</th>
+                                        <td id="paper-category">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>处理统计</h6>
+                            <table class="table">
+                                <tbody>
+                                    <tr>
+                                        <th>文本块数</th>
+                                        <td id="chunk-count">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>实体数</th>
+                                        <td id="entity-count">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>关系数</th>
+                                        <td id="relation-count">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>摘要</h6>
+                            <div class="border rounded p-2" id="paper-abstract">-</div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>类别置信度</h6>
+                            <div id="category-confidence"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <button class="btn btn-primary" id="chat-with-paper">
+                        <i class="fas fa-comments me-1"></i>开始对话
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 知识图谱界面 -->
+        <div id="kg-view" class="view-content">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">知识图谱</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" id="kg-refresh">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="entityTypeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                实体类型
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="entityTypeDropdown" id="entity-type-filters">
+                                <li><a class="dropdown-item active" href="#" data-type="all">所有类型</a></li>
+                                <!-- 实体类型将在这里动态添加 -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="entity-search" placeholder="搜索实体...">
+                                <button class="btn btn-primary" id="search-entity-btn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div id="kg-visualization" style="height: 500px; border: 1px solid #ddd; border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="kg-stats" id="kg-stats">
+                        <!-- 知识图谱统计信息将在这里动态添加 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：论文详情 -->
+    <div class="modal fade" id="paper-detail-modal" tabindex="-1" aria-labelledby="paperDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paperDetailModalLabel">论文详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="paperDetailTabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="info-tab" data-bs-toggle="tab" href="#info-content">基本信息</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="framework-tab" data-bs-toggle="tab" href="#framework-content">论文框架</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="entities-tab" data-bs-toggle="tab" href="#entities-content">实体与关系</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="paperDetailTabContent">
+                        <div class="tab-pane fade show active" id="info-content">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table">
+                                        <tbody>
+                                            <tr>
+                                                <th>标题</th>
+                                                <td id="modal-paper-title">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>作者</th>
+                                                <td id="modal-paper-author">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>类别</th>
+                                                <td id="modal-paper-category">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>文件名</th>
+                                                <td id="modal-paper-filename">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>摘要</h6>
+                                    <div class="border rounded p-2" id="modal-paper-abstract">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="framework-content">
+                            <div id="paper-framework">
+                                <!-- 论文框架将在这里动态添加 -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="entities-content">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>主要实体</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm" id="paper-entities-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>实体</th>
+                                                    <th>类型</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- 实体列表将在这里动态添加 -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>主要关系</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm" id="paper-relations-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>头实体</th>
+                                                    <th>关系</th>
+                                                    <th>尾实体</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- 关系列表将在这里动态添加 -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="chat-with-modal-paper">与此论文对话</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：选择论文 -->
+    <div class="modal fade" id="select-paper-modal" tabindex="-1" aria-labelledby="selectPaperModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="selectPaperModalLabel">选择论文</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="paper-search" placeholder="搜索论文...">
+                        <button class="btn btn-primary" id="search-paper-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="select-paper-table">
+                            <thead>
+                                <tr>
+                                    <th>标题</th>
+                                    <th>作者</th>
+                                    <th>类别</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 论文列表将在这里动态添加 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirm-select-paper" disabled>选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：实体详情 -->
+    <div class="modal fade" id="entity-detail-modal" tabindex="-1" aria-labelledby="entityDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="entityDetailModalLabel">实体详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="entity-header">
+                        <h4 id="entity-name">-</h4>
+                        <span class="badge bg-primary" id="entity-type">-</span>
+                    </div>
+                    <hr>
+                    <div class="entity-relations">
+                        <h6>相关关系</h6>
+                        <ul id="entity-relations-list">
+                            <!-- 关系列表将在这里动态添加 -->
+                        </ul>
+                    </div>
+                    <div class="entity-papers">
+                        <h6>相关论文</h6>
+                        <ul id="entity-papers-list">
+                            <!-- 论文列表将在这里动态添加 -->
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="ask-about-entity">询问该实体</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.0.0/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@1.42.0/dist/force-graph.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/papers.js"></script>
+    <script src="js/upload.js"></script>
+    <script src="js/knowledge-graph.js"></script>
+</body>
+</html>
+

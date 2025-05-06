@@ -6,12 +6,12 @@ const API = (() => {
     
     /**
      * 发送HTTP请求
-     * @param {string} endpoint - API端点
-     * @param {string} method - HTTP方法
-     * @param {Object} data - 请求数据
+     * @param {string} endpoint - API端点【API路径】
+     * @param {string} method - HTTP方法【默认为GET】
+     * @param {Object} data - 请求数据【默认为null】
      * @returns {Promise} - 响应Promise
      */
-    const request = async (endpoint, method = 'GET', data = null) => {
+    const request = async (endpoint, method = 'GET', data = null) => {  // // 定义异步箭头函数,  使用 async 关键字表示返回Promise
         const url = `${BASE_URL}${endpoint}`;
         
         const options = {
@@ -23,7 +23,7 @@ const API = (() => {
         
         if (data) {
             if (method === 'GET') {
-                const params = new URLSearchParams(data);
+                const params = new URLSearchParams(data); // 通过URLSearchParams转换为查询字符串
                 url = `${url}?${params}`;
             } else {
                 options.body = JSON.stringify(data);
@@ -33,8 +33,8 @@ const API = (() => {
         try {
             const response = await fetch(url, options);
             
-            if (!response.ok) {
-                const errorData = await response.json();
+            if (!response.ok) {  // 检查响应状态码(!response.ok)
+                const errorData = await response.json();   // 返回的是一个 Promise 解析后的 JavaScript 对象，包含从 JSON 反序列化得到的数据
                 throw new Error(errorData.detail || '请求失败');
             }
             
@@ -51,31 +51,45 @@ const API = (() => {
      * @param {Function} progressCallback - 进度回调函数
      * @returns {Promise} - 响应Promise
      */
-    const uploadFile = async (file, progressCallback) => {
+    const uploadFile = async (file, progressCallback) => {   // 定义异步箭头函数,  使用 async 关键字表示返回Promise
         const url = `${BASE_URL}/upload_paper`;
         
-        const formData = new FormData();
-        formData.append('file', file);
+        const formData = new FormData();   // 创建FormData对象用于文件上传
+        formData.append('file', file);   // 添加文件到表单数据
         
-        return new Promise((resolve, reject) => {
+        // 创建一个Promise来处理文件上传
+        return new Promise((resolve, reject) => {  // 返回Promise对象实现异步控制流
+            // 使用XMLHttpRequest对象实现文件上传
             const xhr = new XMLHttpRequest();
-            
+            // 初始化POST请求（异步）
             xhr.open('POST', url, true);
+
+
+            // - xhr.upload.onprogress ：XMLHttpRequest的上传进度事件监听器
+            // - event 参数包含上传进度信息：
+            // - lengthComputable ：布尔值，表示是否可计算进度
+            // - loaded ：已上传字节数
+            // - total ：总字节数
             
             xhr.upload.onprogress = (event) => {
                 if (event.lengthComputable && progressCallback) {
                     const progress = (event.loaded / event.total) * 100;
-                    progressCallback(progress);
+                    progressCallback(progress); // 调用进度回调函数
                 }
             };
+
+            // - xhr.onload ：XMLHttpRequest请求完成时触发的事件
+            // - 箭头函数语法： () => {...}， 相当于python里的lambda函数
             
             xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
+                if (xhr.status >= 200 && xhr.status < 300) {   // 检查HTTP状态码是否在成功范围(200-299)
+                    // - 解析响应文本为JSON
+                    // - 通过Promise的resolve返回数据
                     resolve(JSON.parse(xhr.responseText));
                 } else {
                     try {
                         const errorData = JSON.parse(xhr.responseText);
-                        reject(new Error(errorData.detail || '上传失败'));
+                        reject(new Error(errorData.detail || '上传失败'));  // 通过Promise的reject返回错误信息
                     } catch (e) {
                         reject(new Error('上传失败'));
                     }
