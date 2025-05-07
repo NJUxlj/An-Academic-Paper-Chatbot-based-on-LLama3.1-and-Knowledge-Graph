@@ -33,6 +33,23 @@ curl -X POST "http://localhost:8000/ask" \
 curl -X POST "http://localhost:8000/upload_paper" \
 -H "Content-Type: multipart/form-data" \
 -F "file=@paper.pdf"
+
+
+
+- curl -X POST "http://localhost:8000/upload_paper"
+
+- 使用curl工具发送HTTP POST请求
+- 目标URL是本地服务的 /upload_paper 端点
+- -H "Content-Type: multipart/form-data"
+
+- 设置请求头
+- 指定内容类型为multipart/form-data，这是文件上传的标准格式
+- -F "file=@paper.pdf"
+
+- 使用-F参数添加表单数据
+- file=@paper.pdf 表示：
+  - file 是后端API预期的字段名
+  - @paper.pdf 表示上传当前目录下的paper.pdf文件
 '''
 
 
