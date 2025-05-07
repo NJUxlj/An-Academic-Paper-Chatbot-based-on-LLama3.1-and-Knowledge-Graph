@@ -583,3 +583,130 @@ class KnowledgeGraphBuilder:
                     source=relation['source'],
                     target=relation['target']
                 )
+                
+                
+    def get_paper_basic_info(self, paper_id: str) -> Optional[Dict[str, Any]]:
+        """
+        获取论文基本信息
+        
+        Args:
+            paper_id: 论文ID
+            
+        Returns:
+            论文基本信息字典，包含标题、作者、类别等
+        """
+        try:
+            with self.driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (p:Paper)
+                    WHERE id(p) = $paper_id
+                    RETURN p.title AS title, p.author AS author, 
+                           p.category AS category, p.date AS date
+                    """,
+                    paper_id=paper_id
+                )
+                
+                record = result.single()
+                if record:
+                    return {
+                        "paper_id": paper_id,
+                        "title": record["title"],
+                        "author": record["author"],
+                        "category": record["category"],
+                        "date": record["date"]
+                    }
+                return None
+        except Exception as e:
+            logger.error(f"获取论文基本信息时出错: {e}")
+            return None
+
+    def find_similar_papers(self, paper_id: str, max_count: int = 5) -> List[Dict[str, Any]]:
+        """
+        查找与给定论文相似的论文
+        
+        功能分解：
+
+            1. MATCH 部分：
+            
+            - 查找论文p1通过MENTIONS关系指向的实体e
+            - 同时查找其他论文p2也通过MENTIONS关系指向相同实体e
+            - 形成模式：p1→e←p2
+            2. WHERE 条件：
+            
+            - id(p1) = $paper_id ：限定源论文
+            - id(p2) <> $paper_id ：排除源论文自身
+            3. WITH 聚合：
+            
+            - 按p2分组
+            - 计算每篇论文p2与源论文的共同实体数量 common_entities
+            4. ORDER BY ：
+            
+            - 按共同实体数量降序排序
+            5. LIMIT ：
+            
+            - 限制返回结果数量
+            6. RETURN ：
+            
+            - 返回相似论文的ID、标题、作者、类别
+            - 同时返回共同实体数量作为相似度指标
+            这个查询实现了基于共同提及实体的论文相似性推荐算法，是知识图谱推荐系统的核心功能。
+        
+        Args:
+            paper_id: 源论文ID
+            max_count: 最大返回数量
+            
+        Returns:
+            相似论文列表
+        """
+        try:
+            with self.driver.session() as session:
+                # 基于共同提及的实体查找相似论文
+                result = session.run(
+                    """
+                    MATCH (p1:Paper)-[:MENTIONS]->(e)<-[:MENTIONS]-(p2:Paper)
+                    WHERE id(p1) = $paper_id AND id(p2) <> $paper_id
+                    WITH p2, count(e) AS common_entities
+                    ORDER BY common_entities DESC
+                    LIMIT $max_count
+                    RETURN id(p2) AS paper_id, p2.title AS title, 
+                           p2.author AS author, p2.category AS category,
+                           common_entities
+                    """,
+                    paper_id=paper_id,
+                    max_count=max_count
+                )
+                
+                return [dict(record) for record in result]
+        except Exception as e:
+            logger.error(f"查找相似论文时出错: {e}")
+            return []
+
+    def get_latest_papers(self, count: int = 5) -> List[Dict[str, Any]]:
+        """
+        获取最新添加的论文
+        
+        Args:
+            count: 返回的论文数量
+            
+        Returns:
+            最新论文列表
+        """
+        try:
+            with self.driver.session() as session:
+                result = session.run(
+                    """
+                    MATCH (p:Paper)
+                    RETURN id(p) AS paper_id, p.title AS title, 
+                           p.author AS author, p.category AS category,
+                           p.date AS date
+                    ORDER BY p.date DESC
+                    LIMIT $count
+                    """,
+                    count=count
+                )
+                
+                return [dict(record) for record in result]
+        except Exception as e:
+            logger.error(f"获取最新论文时出错: {e}")
+            return []
