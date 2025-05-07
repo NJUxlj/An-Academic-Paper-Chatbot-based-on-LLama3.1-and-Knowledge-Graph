@@ -6,6 +6,8 @@ import re
 from typing import Dict, List, Any, Optional, Union, Tuple
 import torch
 import zhipuai
+from zhipuai import ZhipuAI
+from openai import OpenAI
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from src.configs.config import Config
@@ -32,8 +34,8 @@ class DialogManager:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         
-        # 设置GLM API密钥
-        zhipuai.api_key = Config.MODEL_CONFIG["glm"]["api_key"]
+        
+        self.client = OpenAI(api_key=Config.MODEL_CONFIG["deepseek"]["api_key"], base_url=Config.MODEL_CONFIG["deepseek"]["base_url"])
         
         # 创建向量存储和知识图谱实例
         self.vector_store = VectorStore()
@@ -255,24 +257,24 @@ class DialogManager:
         # 创建提示词
         prompt = f"""你是一个学术论文助手，帮助研究生和教授回答关于AI论文的问题。
 
-用户问题: {query}
+                用户问题: {query}
 
-初始回答: {raw_answer}
+                初始回答: {raw_answer}
 
-知识图谱信息:
-{kg_context}
+                知识图谱信息:
+                {kg_context}
 
-相关文档片段:
-{kb_context}
+                相关文档片段:
+                {kb_context}
 
-基于以上所有信息，请提供一个全面、准确且连贯的最终回答。特别注意整合知识图谱提供的关系信息，确保回答学术严谨且信息丰富。
-"""
+                基于以上所有信息，请提供一个全面、准确且连贯的最终回答。特别注意整合知识图谱提供的关系信息，确保回答学术严谨且信息丰富。
+                """
         
         try:
-            # 调用GLM-4 API
-            response = zhipuai.model_api.invoke(
-                model=Config.MODEL_CONFIG["glm"]["model"],
-                prompt=prompt,
+            # 调用DeepSeek API
+            response = self.client.chat.completions.create(
+                model=Config.MODEL_CONFIG["deepseek"]["model"],
+                messages={"role": "user", "content": prompt},
                 temperature=0.3,
                 top_p=0.7,
                 max_tokens=1500
@@ -282,7 +284,7 @@ class DialogManager:
                 final_answer = response["data"]["choices"][0]["content"]
                 return final_answer
             else:
-                logger.error(f"GLM-4 API调用失败: {response}")
+                logger.error(f"DeepSeek API调用失败: {response}")
                 return raw_answer
         except Exception as e:
             logger.error(f"生成最终答案时出错: {e}")
