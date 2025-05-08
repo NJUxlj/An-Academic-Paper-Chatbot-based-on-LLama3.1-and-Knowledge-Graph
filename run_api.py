@@ -11,6 +11,7 @@ from src.api.api import start_api_server
 from src.configs.config import Config
 
 if __name__ == "__main__":
+    # python  run_api.py
     # 配置日志
     logging.basicConfig(
         level=logging.INFO,

@@ -58,7 +58,7 @@ setup(
         'Source': 'https://github.com/paperchat/paperchat',
         'Tracker': 'https://github.com/paperchat/paperchat/issues',
     },
-    # 数据文件
+    # 数据文件， 指定需要随Python包一起安装的非Python文件
     package_data={
         'paperchat': [
             'frontend/**/*',
@@ -71,5 +71,56 @@ setup(
         ('share/paperchat/examples', ['examples/sample_paper.pdf']),
         ('share/paperchat/docs', ['docs/usage.md', 'docs/api.md']),
     ],
+    
 )
 
+
+'''
+```
+    entry_points={
+        'console_scripts': [
+            'paperchat=main:main',
+        ],
+    },
+```
+- console_scripts ：定义命令行工具入口
+- paperchat=main:main ：
+    - paperchat ：安装后可在命令行直接执行的命令名称
+    - main:main ：表示调用main.py文件中的main()函数
+    - 格式： 命令名=模块路径:函数名
+
+安装后效果：
+    1. 系统会自动生成 paperchat 可执行文件
+    2. 在命令行直接输入 paperchat 即可运行程序
+    3. 相当于执行 python -m main 命令的快捷方式
+    这是Python打包工具setuptools提供的标准功能，用于创建命令行接口(CLI)。
+
+
+package_data
+- 作用：指定需要随Python包一起安装的非Python文件
+- 特点：这些文件必须属于某个Python包(paperchat)
+- 安装位置：会保持原有目录结构安装到site-packages/paperchat下
+
+
+
+data_files
+- 作用：指定需要安装到系统全局目录的非包文件
+    - 特点：可以安装到任意系统目录
+    - 安装位置：
+    - Windows: 会安装到Python安装目录的share/paperchat下
+    - Linux: 通常安装到/usr/share/paperchat
+
+主要区别：
+    - package_data用于包内资源文件
+    - data_files用于全局共享文件
+    - 两者共同确保项目中的所有必要文件都能正确安装部署- 作用：指定需要安装到系统全局目录的非包文件
+    - 特点：可以安装到任意系统目录
+    - 安装位置：
+    - Windows: 会安装到Python安装目录的share/paperchat下
+    - Linux: 通常安装到/usr/share/paperchat
+    主要区别：
+
+    - package_data用于包内资源文件
+    - data_files用于全局共享文件
+    - 两者共同确保项目中的所有必要文件都能正确安装部署
+'''

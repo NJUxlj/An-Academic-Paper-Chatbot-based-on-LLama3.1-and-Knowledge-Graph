@@ -3,7 +3,7 @@
 import logging
 import json
 import re
-from typing import Dict, List, Any, Optional, Union, Tuple
+from typing import Dict, List, Any, Optional, Union, Tuple, Literal
 import torch
 import zhipuai
 from zhipuai import ZhipuAI
@@ -21,20 +21,27 @@ class DialogManager:
     对话管理器，负责处理用户问题和生成回答
     """
     
-    def __init__(self):
+    def __init__(self, model_type:Literal["api", "qwen"] = "api"):
         """
         初始化对话管理器
         """
         # 加载Qwen模型
-        model_path = Config.MODEL_CONFIG["qwen"]["model_path"]
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = AutoModelForCausalLM.from_pretrained(model_path)
-        
-        # 如果有GPU，将模型迁移到GPU
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model.to(self.device)
+        self.model_type = model_type
         
         
+        try:
+            model_path = Config.MODEL_CONFIG["qwen"]["model_path"]
+            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+            self.model = AutoModelForCausalLM.from_pretrained(model_path)
+            
+            # 如果有GPU，将模型迁移到GPU
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.model.to(self.device)
+        except Exception as e:
+            logger.error(f"加载Qwen模型失败: {e}")
+            print("无法加载Qwen模型, 请检查模型权重路径")
+
+
         self.client = OpenAI(api_key=Config.MODEL_CONFIG["deepseek"]["api_key"], base_url=Config.MODEL_CONFIG["deepseek"]["base_url"])
         
         # 创建向量存储和知识图谱实例
@@ -43,6 +50,8 @@ class DialogManager:
         
         # 对话历史
         self.history = []
+        
+    
     
     def process_query(self, query: str, paper_id: Optional[str] = None) -> str:
         """
@@ -103,7 +112,7 @@ class DialogManager:
         Returns:
             是否是重听请求
         """
-        rehear_patterns = ["我没听清楚", "没听清", "再说一遍", "重复一遍"]
+        rehear_patterns = ["我没听清楚", "我没听清", "没听清", "再说一遍", "重复一遍", "你说啥", "啥玩意儿"]
         for pattern in rehear_patterns:
             if pattern in query:
                 return True
