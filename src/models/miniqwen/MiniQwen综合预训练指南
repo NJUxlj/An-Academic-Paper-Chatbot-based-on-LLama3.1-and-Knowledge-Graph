@@ -1,0 +1,122 @@
+
+# MiniQwen 综合预训练指南
+
+本指南说明如何使用综合预训练脚本在多种数据集上继续预训练 MiniQwen 模型。
+
+## 预训练数据集
+
+脚本支持以下数据集的组合：
+
+1. **图书数据集**：使用 BookCorpus，包含各种领域的免费图书
+2. **代码数据集**：使用 The Stack，一个从 GitHub 存储库收集的大型代码语料库
+3. **Reddit 讨论**：包含来自不同子版块的 Reddit 帖子和评论
+4. **学术论文**：
+   - ArXiv 论文（2020年后优先）
+   - PubMed 医学论文（2020年后优先）
+
+## 文件说明
+
+1. `comprehensive_pretraining.py` - 主预训练脚本
+2. `config.json` - 数据集配置文件
+3. `run_pretraining.sh` - 运行脚本
+
+## 准备工作
+
+1. 安装所需依赖：
+
+```bash
+pip install torch transformers datasets wandb tqdm accelerate
+```
+
+2. 确保有足够的存储空间（至少 500GB）和计算资源（建议使用 GPU）。
+
+3. 登录 Weights & Biases（如果使用）：
+
+```bash
+wandb login
+```
+
+## 配置数据集
+
+`config.json` 文件控制要使用的数据集和它们的配置：
+
+- **source**：数据集来源（huggingface 或 local）
+- **name**：数据集名称
+- **config**：数据集配置（如适用）
+- **text_column**：包含文本的列名
+- **combination_mode**：如何组合数据集（interleave 或 concatenate）
+
+您可以添加新数据集或修改现有数据集的配置。
+
+## 运行预训练
+
+使用提供的运行脚本开始预训练：
+
+```bash
+chmod +x run_pretraining.sh
+./run_pretraining.sh
+```
+
+### 重要参数说明
+
+- **--model_path**：初始 MiniQwen 模型路径
+- **--dataset_config**：数据集配置文件路径
+- **--output_dir**：输出目录
+- **--max_steps**：训练步数
+- **--per_device_train_batch_size**：每个设备的训练批量大小
+- **--gradient_accumulation_steps**：梯度累积步数（增大有效批量大小）
+- **--streaming**：使用流式加载（减少内存占用）
+- **--dataset_sampling_rates**：各数据集采样率（逗号分隔）
+- **--pre_2020_sampling_rate**：2020年前论文的采样率
+
+### 调整批量大小
+
+如果遇到内存问题，可以：
+1. 减小 `per_device_train_batch_size`
+2. 增加 `gradient_accumulation_steps`
+3. 使用流式加载 (`--streaming True`)
+
+## 监控训练进度
+
+如果启用了 Weights & Biases，您可以通过其网站界面监控训练指标。
+
+另外，您可以使用 TensorBoard：
+
+```bash
+tensorboard --logdir ./miniqwen_pretrained
+```
+
+## 重新开始训练
+
+如果训练中断，脚本会自动从最后一个检查点恢复。您也可以通过设置 `--resume_from_checkpoint` 参数指定从特定检查点恢复。
+
+## 数据集采样策略
+
+当前配置使用以下采样比例：
+- 图书数据：30%
+- 代码数据：20%
+- Reddit 讨论：20%
+- ArXiv 论文：15%（2020年后优先）
+- PubMed 论文：15%（2020年后优先）
+
+您可以通过修改 `--dataset_sampling_rates` 参数调整这些比例。
+
+## 论文时间过滤
+
+对于学术论文，脚本会优先考虑 2020 年后发表的论文，同时保留一小部分较早的论文。这种平衡确保模型接触到最新的研究成果，同时保持对经典和基础文献的了解。
+
+可以通过 `--pre_2020_sampling_rate` 参数调整 2020 年前论文的采样率。
+
+## 后续步骤
+
+预训练完成后，建议：
+
+1. 评估模型性能
+2. 在特定任务上进行下游微调
+3. 尝试不同的数据混合比例以优化领域性能
+
+## 故障排除
+
+- **内存错误**：减小批量大小或启用梯度检查点
+- **磁盘空间不足**：使用流式模式并限制保存的检查点数量
+- **训练不稳定**：降低学习率或增加预热步数

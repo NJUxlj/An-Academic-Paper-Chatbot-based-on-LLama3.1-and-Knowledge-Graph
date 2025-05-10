@@ -1,0 +1,15 @@
+torch>=1.10.0
+transformers>=4.28.0
+datasets>=2.10.0
+regex
+tqdm
+numpy
+scikit-learn
+sacrebleu
+accelerate>=0.20.0
+bitsandbytes>=0.39.0 # 用于量化
+peft>=0.4.0 # 用于LoRA微调
+tensorboard # 用于可视化训练过程
+pandas
+matplotlib
+sentencepiece # 用于某些分词处理
